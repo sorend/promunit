@@ -7,6 +7,7 @@ import groovy.yaml.YamlBuilder
 import groovy.yaml.YamlSlurper
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
+import org.zeroturnaround.exec.stream.LogOutputStream
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream
 
 @Slf4j
@@ -41,36 +42,18 @@ class PromUnitTestRules {
     }
 
     int runCheck(File rule) {
-        ProcessResult result = new ProcessExecutor().exitValueAny()
-                .command(promtoolBinary.getAbsolutePath(), "check", "rules", rule.getAbsolutePath())
-                .redirectOutput(Slf4jStream.of(log).asInfo())
-                .redirectError(Slf4jStream.of(log).asWarn())
-                .readOutput(true)
-                .execute()
-        int rc = result.exitValue
-        String output = result.outputUTF8()
-
-        writeTestResult("CHECK", rule, rc, output)
-
-        rc
+        Map res = runPromTool(promtoolBinary.absolutePath, "check", "rules", rule.absolutePath)
+        writeTestResult("CHECK", rule, res.rc, res.stdout, res.stderr)
+        res.rc
     }
 
     int runTest(File test) {
-        ProcessResult result = new ProcessExecutor().exitValueAny()
-                .command(promtoolBinary.getAbsolutePath(), "test", "rules", test.getAbsolutePath())
-                .redirectOutput(Slf4jStream.of(log).asInfo())
-                .redirectError(Slf4jStream.of(log).asWarn())
-                .readOutput(true)
-                .execute()
-        int rc = result.exitValue
-        String output = result.outputUTF8()
-
-        writeTestResult("TEST", test, rc, output)
-
-        rc
+        Map res = runPromTool(promtoolBinary.absolutePath, "test", "rules", test.absolutePath)
+        writeTestResult("TEST", test, res.rc, res.stdout, res.stderr)
+        res.rc
     }
 
-    void writeTestResult(String prefix, File test, int rc, String output) {
+    private void writeTestResult(String prefix, File test, int rc, String stdout, String stderr) {
         boolean isError = rc > 1
         boolean isFailure = rc == 1
 
@@ -85,8 +68,8 @@ class PromUnitTestRules {
                 if (isFailure) {
                     'failure'(message: "FAILED", type: "promtool")
                 }
-                'system-out'(output)
-                'system-err'()
+                'system-out' { mkp.yieldUnescaped("<![CDATA[${stdout}]]>") }
+                'system-err' { mkp.yieldUnescaped("<![CDATA[${stderr}]]>") }
             }
         }
 
@@ -106,6 +89,25 @@ class PromUnitTestRules {
         File res = new File(workDir, test.name)
         res.text = builder.toString()
         res
+    }
+
+    private static Map runPromTool(String... args) {
+        StringBuilder stderr = new StringBuilder()
+        ProcessResult result = new ProcessExecutor().exitValueAny()
+                .command(args)
+                .redirectOutput(Slf4jStream.of(log).asInfo())
+                .redirectError(new LogOutputStream() {
+                    @Override
+                    protected void processLine(String line) {
+                        stderr.append(line).append("\n")
+                        log.warn(line)
+                    }
+                })
+                .readOutput(true)
+                .execute()
+        int rc = result.exitValue
+        String output = result.outputUTF8()
+        [rc: rc, stdout: output, stderr: stderr.toString()]
     }
 
     private static String hostname() {
