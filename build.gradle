@@ -1,0 +1,51 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id 'application'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'jacoco'
+}
+
+group 'promunit'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy:3.0.8'
+    implementation 'org.codehaus.groovy:groovy-astbuilder:3.0.8'
+    implementation 'org.codehaus.groovy:groovy-yaml:3.0.8'
+    implementation 'org.codehaus.groovy:groovy-xml:3.0.8'
+    implementation 'info.picocli:picocli:4.6.1'
+    implementation 'org.zeroturnaround:zt-exec:1.12'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.30'
+    testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+}
+
+application {
+    mainClassName = 'promunit.CLI'
+}
+
+publishing {
+    publications {
+        dist(MavenPublication) {
+            artifact shadowJar
+        }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled false
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

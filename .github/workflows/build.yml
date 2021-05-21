@@ -1,0 +1,38 @@
+name: build-and-test
+
+on:
+  schedule:
+  - cron: '0 10 * * *' # every day at 10am
+  push:
+    branches:
+      - '**'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build with Gradle
+        run: ./gradlew clean build
+      - name: Jacoco Test Report
+        run: ./gradlew jacocoTestReport
+        if: ${{ always() }}
+      - uses: codecov/codecov-action@v1
+        with:
+          # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          # files: ./coverage1.xml,./coverage2.xml # optional
+          # flags: unittests # optional
+          fail_ci_if_error: true # optional (default = false)
+          # verbose: true # optional (default = false
+        if: ${{ always() }}
