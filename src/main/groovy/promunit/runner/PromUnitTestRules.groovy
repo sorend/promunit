@@ -25,13 +25,34 @@ class PromUnitTestRules {
             List<File> tests = testsDir.listFiles().findAll { it.name.endsWith(".yml") }
             List<File> rules = rulesDir.listFiles().findAll { it.name.endsWith(".yml") }
 
+            // prepare testss
             List<File> preparedTests = tests.collect { prepareTest(it, rules, workDir) }
 
-            preparedTests.collect { runTest(it) }.sum()
+            log.info("Rules {}", rules)
+            log.info("Tests {}", tests)
+
+            // check rules + run tests
+            return (rules.collect { runCheck(it) }.sum() ?: 0) +
+                    (preparedTests.collect { runTest(it) }.sum() ?: 0)
         }
         finally {
             workDir.deleteDir()
         }
+    }
+
+    int runCheck(File rule) {
+        ProcessResult result = new ProcessExecutor().exitValueAny()
+                .command(promtoolBinary.getAbsolutePath(), "check", "rules", rule.getAbsolutePath())
+                .redirectOutput(Slf4jStream.of(log).asInfo())
+                .redirectError(Slf4jStream.of(log).asWarn())
+                .readOutput(true)
+                .execute()
+        int rc = result.exitValue
+        String output = result.outputUTF8()
+
+        writeTestResult("CHECK", rule, rc, output)
+
+        rc
     }
 
     int runTest(File test) {
@@ -44,6 +65,12 @@ class PromUnitTestRules {
         int rc = result.exitValue
         String output = result.outputUTF8()
 
+        writeTestResult("TEST", test, rc, output)
+
+        rc
+    }
+
+    void writeTestResult(String prefix, File test, int rc, String output) {
         boolean isError = rc > 1
         boolean isFailure = rc == 1
 
@@ -63,9 +90,7 @@ class PromUnitTestRules {
             }
         }
 
-        new File(outputDir, "TEST-${test.name}.xml").text = writer.toString()
-
-        rc
+        new File(outputDir, "${prefix}-${test.name}.xml").text = writer.toString()
     }
 
     static File prepareTest(File test, List<File> rules, File workDir) {
