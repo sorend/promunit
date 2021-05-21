@@ -1,12 +1,15 @@
 package promunit.runner
 
-import groovy.transform.builder.Builder
+
+import groovy.util.logging.Slf4j
 import groovy.xml.MarkupBuilder
 import groovy.yaml.YamlBuilder
 import groovy.yaml.YamlSlurper
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
+import org.zeroturnaround.exec.stream.slf4j.Slf4jStream
 
+@Slf4j
 class PromUnitTestRules {
 
     File testsDir
@@ -16,7 +19,7 @@ class PromUnitTestRules {
 
     String hostname = hostname()
 
-    void runTests() {
+    int runTests() {
         File workDir = File.createTempDir("promunit")
         try {
             List<File> tests = testsDir.listFiles().findAll { it.name.endsWith(".yml") }
@@ -24,16 +27,18 @@ class PromUnitTestRules {
 
             List<File> preparedTests = tests.collect { prepareTest(it, rules, workDir) }
 
-            preparedTests.each { runTest(it) }
+            preparedTests.collect { runTest(it) }.sum()
         }
         finally {
             workDir.deleteDir()
         }
     }
 
-    void runTest(File test) {
+    int runTest(File test) {
         ProcessResult result = new ProcessExecutor().exitValueAny()
                 .command(promtoolBinary.getAbsolutePath(), "test", "rules", test.getAbsolutePath())
+                .redirectOutput(Slf4jStream.of(log).asInfo())
+                .redirectError(Slf4jStream.of(log).asWarn())
                 .readOutput(true)
                 .execute()
         int rc = result.exitValue
@@ -59,6 +64,8 @@ class PromUnitTestRules {
         }
 
         new File(outputDir, "TEST-${test.name}.xml").text = writer.toString()
+
+        rc
     }
 
     static File prepareTest(File test, List<File> rules, File workDir) {

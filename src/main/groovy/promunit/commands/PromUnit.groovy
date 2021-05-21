@@ -20,6 +20,8 @@ class PromUnit implements Runnable {
 
     @Override
     void run() {
-        new PromUnitTestRules(testsDir: testsDir, rulesDir: rulesDir, outputDir: outputDir, promtoolBinary: promtoolBinary).runTests()
+        int rcSum = new PromUnitTestRules(testsDir: testsDir, rulesDir: rulesDir, outputDir: outputDir, promtoolBinary: promtoolBinary).runTests()
+        if (rcSum > 0)
+            throw new AssertionError("There are failed tests")
     }
 }
