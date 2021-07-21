@@ -23,7 +23,7 @@ dependencies {
     implementation 'info.picocli:picocli:4.6.1'
     implementation 'org.zeroturnaround:zt-exec:1.12'
     implementation 'org.slf4j:slf4j-api:1.7.31'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.31'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.32'
     testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
 }
 
