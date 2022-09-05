@@ -16,10 +16,10 @@ repositories {
 sourceCompatibility = 1.8
 
 dependencies {
-    implementation 'org.codehaus.groovy:groovy:3.0.12'
-    implementation 'org.codehaus.groovy:groovy-astbuilder:3.0.12'
-    implementation 'org.codehaus.groovy:groovy-yaml:3.0.12'
-    implementation 'org.codehaus.groovy:groovy-xml:3.0.12'
+    implementation "org.apache.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy-astbuilder:${groovyVersion}"
+    implementation "org.apache.groovy:groovy-yaml:${groovyVersion}"
+    implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     implementation 'info.picocli:picocli:4.6.3'
     implementation 'org.zeroturnaround:zt-exec:1.12'
     implementation 'org.slf4j:slf4j-api:2.0.0'
