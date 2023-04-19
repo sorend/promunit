@@ -20,7 +20,7 @@ dependencies {
     implementation "org.apache.groovy:groovy-astbuilder:${groovyVersion}"
     implementation "org.apache.groovy:groovy-yaml:${groovyVersion}"
     implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
-    implementation 'info.picocli:picocli:4.7.2'
+    implementation 'info.picocli:picocli:4.7.3'
     implementation 'org.zeroturnaround:zt-exec:1.12'
     implementation 'org.slf4j:slf4j-api:2.0.7'
     implementation 'org.slf4j:slf4j-jdk14:2.0.7'
