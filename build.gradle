@@ -13,7 +13,9 @@ repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = 1.8
+}
 
 dependencies {
     implementation "org.apache.groovy:groovy:${groovyVersion}"
@@ -40,16 +42,17 @@ publishing {
 }
 
 jacocoTestReport {
+    dependsOn test
     reports {
-        xml.enabled true
-        html.enabled false
+        xml.required = true
     }
 }
 
 test {
+    finalizedBy jacocoTestReport
     useJUnitPlatform()
 }
 
 wrapper {
-    gradleVersion = '7.0.2'
+    gradleVersion = '8.5'
 }

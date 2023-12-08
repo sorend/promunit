@@ -78,16 +78,15 @@ class PromUnitTestRules {
 
     static File prepareTest(File test, List<File> rules, File workDir) {
         def yaml = new YamlSlurper().parse(test)
-        List<String> mappedRuleFiles = yaml.rule_files.collect { String path ->
+        Map<String, String> mappedRuleFiles = yaml.rule_files.collectEntries { String path ->
             def file = new File(path)
             def found = rules.find { it.name == file.name }
-            found?.absolutePath ?: path
+            [(path): found?.absolutePath ?: path]
         }
-        yaml.rule_files = mappedRuleFiles
-        def builder = new YamlBuilder()
-        builder(yaml)
+        def testContent = test.text
+        mappedRuleFiles.each { k, v -> testContent = testContent.replace(k, v) }
         File res = new File(workDir, test.name)
-        res.text = builder.toString()
+        res.text = testContent
         res
     }
 
